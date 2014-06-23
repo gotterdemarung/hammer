@@ -1,0 +1,10 @@
+
+# IDE folders
+.idea/
+
+# Vendor folder
+vendor/
+
+# Temporary files
+*.swp
+~*

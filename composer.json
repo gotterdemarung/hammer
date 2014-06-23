@@ -1,0 +1,22 @@
+{
+    "name": "gotterdemarung/hammer",
+    "version": "0.0.1",
+    "description": "Code hammering tool",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anton Dorofieiev",
+            "email": "gotterdemarung@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "Gotterdemarung\\Hammer\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=5.4",
+        "squizlabs/php_codesniffer": "1.5.3",
+        "phpmd/phpmd": "2.0.0"
+    }
+}

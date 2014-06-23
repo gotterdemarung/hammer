@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+// Detecting composer
+if (file_exists(__DIR__ . '/../autoload.php')) {
+    // Inside composer's bin
+    $composer = __DIR__ . '/../';
+} elseif (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    // Standalone
+    $composer = __DIR__ . '/../vendor/';
+} else {
+    echo "Cant find Composer autoloader.", PHP_EOL, PHP_EOL;
+    exit(127);
+}
+
+// Autoloader
+require $composer . 'autoload.php';
+
+$targets = [$argv[1]];
+
+// Instantiating PHP code sniffer
+$phpcs = new \Gotterdemarung\Hammer\PhpCodeSniffer($composer . 'bin/phpcs', 'PSR2');
+
+// Instantiating PHP mess detector
+$phpmd = new \Gotterdemarung\Hammer\PhpMessDetector($composer . 'bin/phpmd');
+
+// Calculating score
+foreach ($targets as $target) {
+    $phpCsScore = $phpcs->getScore($target);
+    $phpMdScore = $phpmd->getScore($target);
+
+    $totalScore = $phpCsScore * 3 + $phpMdScore * 17;
+
+    echo 'Score for ', $target, ' (lower is better)', PHP_EOL;
+    echo ' * PHP Code Sniffer score: ', $phpCsScore, PHP_EOL;
+    echo ' * PHP Mess Detector score: ', $phpMdScore, PHP_EOL;
+    echo ' * Total: ', $totalScore, PHP_EOL;
+    echo PHP_EOL;
+}
