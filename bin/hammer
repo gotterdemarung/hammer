@@ -24,16 +24,23 @@ $phpcs = new \Gotterdemarung\Hammer\PhpCodeSniffer($composer . 'bin/phpcs', 'PSR
 // Instantiating PHP mess detector
 $phpmd = new \Gotterdemarung\Hammer\PhpMessDetector($composer . 'bin/phpmd');
 
+// Instantiating PHP copy paste detector
+$phpcp = new \Gotterdemarung\Hammer\PhpCopyPasteDetector($composer . 'bin/phpcpd');
+
 // Calculating score
 foreach ($targets as $target) {
     $phpCsScore = $phpcs->getScore($target);
     $phpMdScore = $phpmd->getScore($target);
+    $phpCpScore = $phpcp->getScore($target);
 
-    $totalScore = $phpCsScore * 3 + $phpMdScore * 17;
+    $totalScore = $phpCsScore * 3 + $phpMdScore * 17 + $phpCpScore * 2;
 
+    echo PHP_EOL;
     echo 'Score for ', $target, ' (lower is better)', PHP_EOL;
     echo ' * PHP Code Sniffer score: ', $phpCsScore, PHP_EOL;
     echo ' * PHP Mess Detector score: ', $phpMdScore, PHP_EOL;
+    echo ' * PHP Copy-Paste score: ', $phpCpScore, PHP_EOL;
     echo ' * Total: ', $totalScore, PHP_EOL;
+    echo PHP_EOL;
     echo PHP_EOL;
 }
