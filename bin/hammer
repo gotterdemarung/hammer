@@ -16,7 +16,28 @@ if (file_exists(__DIR__ . '/../autoload.php')) {
 // Autoloader
 require $composer . 'autoload.php';
 
-$targets = [$argv[1]];
+// Reading arguments list
+$target = null;
+$options = [
+    'verbose'   => false,
+    'porcelain' => false,
+    'help'      => false
+];
+for ($i = 1; $i < $argc; $i++) {
+    if (substr($argv[$i], 0, 2) === '--') {
+        $options[substr($argv[$i], 2)] = true;
+    } else {
+        $target = $argv[$i];
+    }
+}
+
+if (empty($target) || $options['help']) {
+    echo "PHP Hammer\n\nUsage: ./hammer <targetFolder> [--porcelain] [--verbose]\n\n";
+    echo " --procelain    outputs data in JSON\n";
+    echo " --verbose      verbose output\n";
+    echo " --help         show this message\n\n";
+    exit(1);
+}
 
 // Instantiating PHP code sniffer
 $phpcs = new \Gotterdemarung\Hammer\PhpCodeSniffer($composer . 'bin/phpcs', 'PSR2');
@@ -30,28 +51,40 @@ $phpcp = new \Gotterdemarung\Hammer\PhpCopyPasteDetector($composer . 'bin/phpcpd
 // Instantiating PHP code lines analyzer
 $phpcl = new \Gotterdemarung\Hammer\PhpLocAnalyzer($composer . 'bin/phploc');
 
-// Calculating score
-foreach ($targets as $target) {
-    if (!file_exists($target) || !is_dir($target)) {
-        echo PHP_EOL, 'Wrong target ', $target, PHP_EOL;
-        continue;
-    }
 
-    echo PHP_EOL;
-    echo 'Score for ', $target, ' (lower is better)', PHP_EOL;
-    $phpCsScore = $phpcs->getScore($target);
-    echo ' * PHP Code Sniffer score: ', $phpCsScore, PHP_EOL;
-    $phpMdScore = $phpmd->getScore($target);
-    echo ' * PHP Mess Detector score: ', $phpMdScore, PHP_EOL;
-    $phpCpScore = $phpcp->getScore($target);
-    echo ' * PHP Copy-Paste score: ', $phpCpScore, PHP_EOL;
-    $phpLcScore = $phpcl->getScore($target);
-    echo ' * PHP LLOC/CLOC score: ', $phpLcScore, PHP_EOL;
-    echo PHP_EOL;
-    $totalScore = $phpCsScore * 3 + $phpMdScore * 17 + $phpCpScore * 2;
-    $totalScore = intval($totalScore / -$phpLcScore * 1000);
-    echo ' * Hammerscore: ', $totalScore, PHP_EOL;
-    echo PHP_EOL;
+
+
+
+// Calculating score
+$scoreBoard = [];
+if (!file_exists($target) || !is_dir($target)) {
+    echo PHP_EOL, 'Wrong target ', $target, PHP_EOL;
+    exit(2);
+}
+$scoreBoard['phpcs']     = $phpcs->getScore($target);
+$scoreBoard['phpmd']     = $phpmd->getScore($target);
+$scoreBoard['phpcp']     = $phpcp->getScore($target);
+$scoreBoard['lloc_cloc'] = $phpcl->getScore($target);
+$scoreBoard['total']     = $scoreBoard['phpcs'] * 3 + $scoreBoard['phpmd'] * 17 + $scoreBoard['phpcp'] * 2;
+if ($scoreBoard['lloc_cloc'] !== 0) {
+    $scoreBoard['total'] = intval($scoreBoard['total'] / (-$scoreBoard['lloc_cloc'] * 1000));
 }
 
-echo PHP_EOL;
+
+// Output
+if ($options['porcelain']) {
+    echo json_encode($scoreBoard);
+    exit(0);
+} else {
+    echo "\n";
+    echo "# PHP Hammer report\n";
+    echo "===================\n\n";
+    echo "Target: " . $target . "\n\n\n";
+    echo ' * PHP Code Sniffer score: ', $scoreBoard['phpcs'], PHP_EOL;
+    echo ' * PHP Mess Detector score: ', $scoreBoard['phpmd'], PHP_EOL;
+    echo ' * PHP Copy-Paste score: ', $scoreBoard['phpcp'], PHP_EOL;
+    echo ' * PHP LLOC/CLOC score: ', $scoreBoard['lloc_cloc'], PHP_EOL;
+    echo ' * Hammerscore: ', $scoreBoard['total'], PHP_EOL, PHP_EOL;
+    exit(0);
+}
+
